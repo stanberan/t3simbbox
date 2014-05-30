@@ -128,7 +128,7 @@ String deviceid="bboxSimulatorV1";
 				
 				//start getting accelerometer data
 				Log.e("LOG", "Activating GPS signals");
-				locationManager.requestLocationUpdates(PROVIDER, 10000, 100.0f, Memory.gpsListener);
+				locationManager.requestLocationUpdates(PROVIDER, 100, 10.0f, Memory.gpsListener);
 				sensorManager.registerListener(sensorListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
 				sensorManager.registerListener(sensorListener, sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE), SensorManager.SENSOR_DELAY_NORMAL);
 			

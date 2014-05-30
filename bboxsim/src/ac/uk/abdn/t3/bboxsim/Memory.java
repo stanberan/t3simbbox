@@ -1,5 +1,6 @@
 package ac.uk.abdn.t3.bboxsim;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -27,12 +28,12 @@ public class Memory {
 	static long previousSend;
 	
 	static float temp=-99;
-	static int ax_min;
-	static int ax_max;
-	static int ay_min;
-	static int ay_max;
-	static int az_min;
-	static int az_max;
+	static long ax_min;
+	static long ax_max;
+	static long ay_min;
+	static long ay_max;
+	static long az_min;
+	static long az_max;
 
 
 	static long ax_average;
@@ -50,9 +51,9 @@ public class Memory {
 	
 	public static void getACCReadLoop(float xf,float yf, float zf,float range){
 		
-		int x=(int)xf;
-		int y=(int)yf;
-		int z=(int)zf;
+		long x=convertACC(xf);
+		long y=convertACC(yf);
+		long z=convertACC(zf);
 		
 		
 		
@@ -153,10 +154,44 @@ public class Memory {
 			 
 		 }
 		
-		
+	
+			
+			
+			
+			
+			
+			
+		}
 
 		
-	}
+	
+private static long convertACC(float ACC){
+	long finaloutput;
+double round=(double)Math.round(ACC * 1000) / 1000;
+int i=0;
+double fraction;
+if(round<0){
+	i=(int)Math.ceil(round);
+}
+else{
+	i=(int)Math.floor(round);
+}
+fraction=round-i;
+long frl=(long) (fraction*1000);
+if(round<0){
+finaloutput=i*1000-frl;
+}
+else{
+	finaloutput=i*1000+frl;
+}
+
+return finaloutput;
+	//BigDecimal round = new BigDecimal(ACC).setScale(5,BigDecimal.ROUND_HALF_UP);
+	
+//	int i= (round < 0 ? Math.ceil(round) : Math.floor(round)));
+	
+}
+	
 
 	 
 	
