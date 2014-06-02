@@ -1,5 +1,7 @@
 package ac.uk.abdn.t3.bboxsim;
 
+import java.util.Locale;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -10,6 +12,15 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GraphViewSeries;
+import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
+import com.jjoe64.graphview.GraphView.GraphViewData;
+import com.jjoe64.graphview.LineGraphView;
+
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.TextToSpeech.OnInitListener;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -29,22 +40,37 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
- public class MainActivity extends Activity {
+ public class MainActivity extends Activity implements OnInitListener {
 static TextView output;
-static TextView x;
-static TextView y;
-static TextView z;
+long count;
+private TextToSpeech myTTS;
+private int MY_DATA_CHECK_CODE = 0;
+Location previousLocation=null;
+
+float distanceTravelled=0;
+
+GraphViewSeries seriesCos;
+GraphViewSeries seriesSin;
+GraphViewSeries seriesRnd;
+LinearLayout graphLayout;
+LinearLayout graphLayout1;
+LinearLayout graphLayout2;
 private final String SERVER_URL="http://t3.abdn.ac.uk:8080/bboxserver/upload";
 
 Button start;
+Button set;
 LocationManager locationManager;
 SensorManager sensorManager;
-
+TextView distance;
+TextView speed;
 private SensorEventListener sensorListener;
+
 
 private static String PROVIDER=LocationManager.GPS_PROVIDER ;
 String deviceid="bboxSimulatorV1";
@@ -54,15 +80,19 @@ String deviceid="bboxSimulatorV1";
 		Memory.previousSend=System.currentTimeMillis();
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		output=(TextView)findViewById(R.id.output);
-		x=(TextView)findViewById(R.id.x);
-		y=(TextView)findViewById(R.id.y);
-		z=(TextView)findViewById(R.id.z);
 		start=(Button)findViewById(R.id.button_sim);
+		set=(Button)findViewById(R.id.button_tre);
 		Memory.locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		locationManager=Memory.locationManager;
 		sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
-		
+		distance=(TextView)findViewById(R.id.distance);
+		speed=(TextView)findViewById(R.id.speed);
+		//check tts
+		 Intent checkTTSIntent = new Intent();
+         checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+         startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
 		
 		sensorListener=new SensorEventListener() {
 		    @Override
@@ -76,28 +106,11 @@ String deviceid="bboxSimulatorV1";
 		        	
 		        float i=sensor.getMaximumRange();
 		           Memory.getACCReadLoop(event.values[0], event.values[1], event.values[2],i);
-		           if(System.currentTimeMillis()-Memory.previousSend > Memory.LOOP_TIME &&!Memory.sending){
-		        	   Log.e("LOG","GETTING JSON DATA AFTER 20 seconds");
-		        	  //sendData
-		        	 
-		        	   
-		        	 
-		        	   try {
-						Memory.jsonBody.put("batt", getBatteryLevel());
-						 String jsonData=Memory.getJsonData();
-						  output.setText(jsonData);
-						  Memory.sending=true;
-			        	  new SendTask(jsonData,SERVER_URL).execute();
-					} catch (JSONException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-		        	 
-		        //
-		        	   
-		        	   
-		        	
-		           }
+		        seriesSin.appendData(new GraphViewData(count++,event.values[0]), true, 1000);
+		        seriesCos.appendData(new GraphViewData(count++,event.values[1]), true, 1000);
+		        seriesRnd.appendData(new GraphViewData(count++,event.values[2]), true, 1000);
+		           
+		        checkDriving();
 		      
 		        }
 		        else if (sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
@@ -110,11 +123,47 @@ String deviceid="bboxSimulatorV1";
 		};
 		
 		Memory.gpsListener=new LocationListener() { public void onLocationChanged(Location location) {
-		    // ignore...for now
+		 if(location.hasSpeed()){
+speed.setText(""+location.getSpeed());
+		 }
+		 if(previousLocation!=null){
+		 float dis=location.distanceTo(previousLocation);
+		 distanceTravelled+=dis;
+		 distance.setText(""+distanceTravelled);
+		 previousLocation=location;
+		 }
+		 previousLocation=location;
+		 
+		 
+			 if(System.currentTimeMillis()-Memory.previousSend > Memory.LOOP_TIME &&!Memory.sending){
+	        	   Log.e("LOG","GETTING JSON DATA AFTER 20 seconds");
+	        	  //sendData
+	        	 
+	        	   
+	        	 
+	        	   try {
+					Memory.jsonBody.put("batt", getBatteryLevel());
+					 String jsonData=Memory.getJsonData();
+					 // output.setText(jsonData);
+					//  Memory.sending=true;
+		        	//  new SendTask(jsonData,SERVER_URL).execute();
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	        	 
+	        //
+	        	   
+	        	   
+	        	
+	           }
+			
+			
 		}
 		public void onProviderDisabled(String provider) { // required for interface, not used
 		}
-		public void onProviderEnabled(String provider) { // required for interface, not used
+		public void onProviderEnabled(String provider) {
+			Toast.makeText(MainActivity.this, "Provider ACTIVATED!"+provider, Toast.LENGTH_LONG).show();// required for interface, not used
 		}
 		public void onStatusChanged(String provider, int status, Bundle extras) {
 		    // required for interface, not used
@@ -128,7 +177,7 @@ String deviceid="bboxSimulatorV1";
 				
 				//start getting accelerometer data
 				Log.e("LOG", "Activating GPS signals");
-				locationManager.requestLocationUpdates(PROVIDER, 100, 10.0f, Memory.gpsListener);
+				locationManager.requestLocationUpdates(PROVIDER, 500, 10.0f, Memory.gpsListener);
 				sensorManager.registerListener(sensorListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
 				sensorManager.registerListener(sensorListener, sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE), SensorManager.SENSOR_DELAY_NORMAL);
 			
@@ -137,12 +186,64 @@ String deviceid="bboxSimulatorV1";
 				
 			}
 		});
+		set.setOnClickListener(new OnClickListener(){
+			@SuppressLint("InlinedApi")
+			public void onClick(View v){
+				
+			Intent i=new Intent(MainActivity.this,TresholdActivity.class);
+			startActivity(i);
+				
+				
+				
+			}
+		});
+		
+		//graph
+		int num = 1;
+		GraphViewData[] data = new GraphViewData[num];
+		double v=0;
+		for (int i=0; i<num; i++) {
+		  v += 0.2;
+		  data[i] = new GraphViewData(i, Math.sin(v));
+		}
+		seriesSin = new GraphViewSeries("X",null, data);
+		seriesSin.getStyle().color=Color.RED;
+		seriesCos = new GraphViewSeries("Y",null, data);
+		seriesCos.getStyle().color=Color.GREEN;
+		seriesRnd = new GraphViewSeries("Z",null, data);
+		seriesRnd.getStyle().color=Color.YELLOW;
+			GraphView graphView = new LineGraphView(
+			    this // context
+			    , " X" // heading
+			);
+			
+			graphView.addSeries(seriesSin); // data
+			graphView.addSeries(seriesCos);
+			graphView.addSeries(seriesRnd);
+			//graphView.setHorizontalLabels(new String[] {"2 days ago", "today", "tomorrow"});
+			graphView.getGraphViewStyle().setGridColor(Color.BLACK);
+		
+			graphView.setViewPort(2, 1000);
+			graphView.setScrollable(true);
+			// optional - activate scaling / zooming
+			graphView.setScalable(true);
+			graphView.setShowLegend(true);
+			
+			graphLayout = (LinearLayout) findViewById(R.id.graph);
+			
+			graphLayout.addView(graphView);
+		
+
+		
 	}
 		
 		public void onPause(){
 			super.onPause();
 			locationManager.removeUpdates(Memory.gpsListener);
 			sensorManager.unregisterListener(sensorListener);
+			count=0;
+			distanceTravelled=0;
+			previousLocation=null;
 		}
 		public void onResume(){
 			super.onResume();
@@ -219,5 +320,77 @@ String deviceid="bboxSimulatorV1";
 	    	
 	}
 	}
+	
+	
+	public void checkDriving(){
+		double x_diff=Math.abs(Memory.ax_min)+Math.abs(Memory.ax_max);
+		double y_diff=Math.abs(Memory.ay_min)+Math.abs(Memory.ay_max);
+		double z_diff=Math.abs(Memory.az_min)+Math.abs(Memory.az_max);
+		output.setText("TURNS:"+x_diff+"BRAKING"+y_diff);
+		 if(System.currentTimeMillis()-Memory.previousSend > Memory.LOOP_TIME &&!Memory.sending){
+			 Memory.getJsonData();
+			 Memory.previousSend=System.currentTimeMillis();
+		if(x_diff<Memory.X_LOW_TRESHOLD){
+			speakWords("Perfect turning...");
+		}
+		else if(x_diff>=Memory.X_LOW_TRESHOLD && x_diff<Memory.X_MEDIUM_TRESHOLD){
+			speakWords("Good turning");
+		}
+		else if(x_diff>=Memory.X_MEDIUM_TRESHOLD && x_diff<Memory.X_HIGH_TRESHOLD){
+			speakWords("Watch out!Sharp turns!");
+		}
+		else if(x_diff>=Memory.X_HIGH_TRESHOLD){
+			//Toast.makeText(this, "Left and Right Turns are EXTREME:"+(int)x_diff, Toast.LENGTH_LONG).show();
+	      speakWords("Your Turns are VERY dangerous!");
+		}
+		
+		if(y_diff<Memory.Y_LOW_TRESHOLD){
+		speakWords("Perfect braking!");
+		}
+		else if(y_diff>=Memory.Y_LOW_TRESHOLD && y_diff<Memory.Y_MEDIUM_TRESHOLD){
+			speakWords("Good braking!");//	Toast.makeText(this, "Acceleration Braking are LOW:"+(int)y_diff, Toast.LENGTH_LONG).show();
+		}
+		else if(y_diff>=Memory.Y_MEDIUM_TRESHOLD && y_diff<Memory.Y_HIGH_TRESHOLD){
+			speakWords("Cautious with braking!");//	Toast.makeText(this, "Acceleration Braking  are MEDIUM:"+(int)y_diff, Toast.LENGTH_LONG).show();
+		}
+		else if(y_diff>=Memory.Y_HIGH_TRESHOLD){
+			speakWords("Fuck you Michael! stop shaking mee!");	//Toast.makeText(this, "Acceleration Braking are EXTREME:"+(int)y_diff, Toast.LENGTH_LONG).show();
+		}
+		 }
+		
+	}
 
+	@Override
+	public void onInit(int initStatus) {
+        //check for successful instantiation
+       if (initStatus == TextToSpeech.SUCCESS) {
+           if(myTTS.isLanguageAvailable(Locale.UK)==TextToSpeech.LANG_AVAILABLE)
+               myTTS.setLanguage(Locale.UK);
+       }
+       else if (initStatus == TextToSpeech.ERROR) {
+           Toast.makeText(this, "Sorry! Text To Speech failed...", Toast.LENGTH_LONG).show();
+       }
+		
+	}
+	
+	  private void speakWords(String speech) {
+		  
+          //speak straight away
+          myTTS.speak(speech, TextToSpeech.QUEUE_ADD, null);
+  }
+	  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		     
+	        if (requestCode == MY_DATA_CHECK_CODE) {
+	            if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+	                //the user has the necessary data - create the TTS
+	            myTTS = new TextToSpeech(this, this);
+	            }
+	            else {
+	                    //no data - install it now
+	                Intent installTTSIntent = new Intent();
+	                installTTSIntent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+	                startActivity(installTTSIntent);
+	            }
+	        }
 }
+ }

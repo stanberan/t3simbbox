@@ -10,6 +10,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.util.Log;
+import android.widget.Toast;
 
 public class Memory {
 	static LocationListener gpsListener;
@@ -28,12 +29,12 @@ public class Memory {
 	static long previousSend;
 	
 	static float temp=-99;
-	static long ax_min;
-	static long ax_max;
-	static long ay_min;
-	static long ay_max;
-	static long az_min;
-	static long az_max;
+	static double ax_min;
+	static double ax_max;
+	static double ay_min;
+	static double ay_max;
+	static double az_min;
+	static double az_max;
 
 
 	static long ax_average;
@@ -46,14 +47,20 @@ public class Memory {
 	static long y_total;
 	static long z_total;
 	
+	static	float X_LOW_TRESHOLD=10;
+	static	float X_MEDIUM_TRESHOLD=20;
+	static	float X_HIGH_TRESHOLD=30;
+	static	float Y_LOW_TRESHOLD=10;
+	static	float Y_MEDIUM_TRESHOLD=20;
+	static	float Y_HIGH_TRESHOLD=30;
 	
 	
 	
 	public static void getACCReadLoop(float xf,float yf, float zf,float range){
 		
-		long x=convertACC(xf);
-		long y=convertACC(yf);
-		long z=convertACC(zf);
+		double x=xf;
+		double y=yf;
+		double z=zf;
 		
 		
 		
@@ -84,11 +91,14 @@ public class Memory {
 		 }
 
 		
-		MainActivity.x.setText("X: \t"+x+"\t"+ax_min+"\t"+ax_max+"\t"+x_total+"\t"+(double)(x_total/acc_size)+"\t"+temp);
-		MainActivity.y.setText("Y: \t"+y+"\t"+ay_min+"\t"+ay_max+"\t"+y_total+"\t"+(double)(y_total/acc_size)+"\t"+range);
-		MainActivity.z.setText("Z: \t"+z+"\t"+az_min+"\t"+az_max+"\t"+z_total+"\t"+(double)(z_total/acc_size)+"\t"+range);
+//		MainActivity.x.setText("X: \t"+x+"\t"+ax_min+"\t"+ax_max+"\t"+x_total+"\t"+(double)(x_total/acc_size)+"\t"+temp);
+//		MainActivity.y.setText("Y: \t"+y+"\t"+ay_min+"\t"+ay_max+"\t"+y_total+"\t"+(double)(y_total/acc_size)+"\t"+range);
+//		MainActivity.z.setText("Z: \t"+z+"\t"+az_min+"\t"+az_max+"\t"+z_total+"\t"+(double)(z_total/acc_size)+"\t"+range);
 		
 	}
+	
+		
+		
 	
 	
 	public static String getJsonData(){
@@ -126,7 +136,7 @@ public class Memory {
 		 String formattedDate = new SimpleDateFormat("dd-MM-yy hh:mm:ss").format(d);
 		 jsonBody.put("tm",formattedDate);
 		 Date sent=new Date();
-		 String formattedsent = new SimpleDateFormat("dd-MM-yy hh:mm:ss").format(d);
+		 String formattedsent = new SimpleDateFormat("dd-MM-yy hh:mm:ss").format(sent);
 		 jsonBody.put("time",formattedsent);
 		 jsonBody.put("device_id", deviceid);
 		 return jsonBody.toString();
