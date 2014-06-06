@@ -12,9 +12,19 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+
+
+
+
+
+
+
+
+
+
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphViewSeries;
-import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.LineGraphView;
 
@@ -110,7 +120,28 @@ String deviceid="bboxSimulatorV1";
 		        seriesCos.appendData(new GraphViewData(count++,event.values[1]), true, 1000);
 		        seriesRnd.appendData(new GraphViewData(count++,event.values[2]), true, 1000);
 		           
-		        checkDriving();
+		        if(System.currentTimeMillis()-Memory.previousSend > Memory.LOOP_TIME &&!Memory.sending){
+		        	   Log.e("LOG","GETTING JSON DATA AFTER 20 seconds");
+		        	  //sendData
+		        	 
+		        	   
+		        	    
+		        	   try {
+						Memory.jsonBody.put("batt", getBatteryLevel());
+					    checkDriving();
+					    Memory.jsonBody.put("distance", distanceTravelled);
+					  distanceTravelled=0;
+					 String jsonData=Memory.getJsonData();
+					 
+						 // output.setText(jsonData);
+						  Memory.sending=true;
+						  speakWords("Sending data to server");
+			        	  new SendTask(jsonData,SERVER_URL).execute();
+					} catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		        }
 		      
 		        }
 		        else if (sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
@@ -135,28 +166,13 @@ speed.setText(""+location.getSpeed());
 		 previousLocation=location;
 		 
 		 
-			 if(System.currentTimeMillis()-Memory.previousSend > Memory.LOOP_TIME &&!Memory.sending){
-	        	   Log.e("LOG","GETTING JSON DATA AFTER 20 seconds");
-	        	  //sendData
-	        	 
-	        	   
-	        	 
-	        	   try {
-					Memory.jsonBody.put("batt", getBatteryLevel());
-					 String jsonData=Memory.getJsonData();
-					 // output.setText(jsonData);
-					//  Memory.sending=true;
-		        	//  new SendTask(jsonData,SERVER_URL).execute();
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+			
 	        	 
 	        //
 	        	   
 	        	   
 	        	
-	           }
+	           
 			
 			
 		}
@@ -314,6 +330,7 @@ speed.setText(""+location.getSpeed());
 
 	    @Override
 	    protected void onPostExecute(String result) {
+	  	//  speakWords("Data sent!Reading server message:"+result);
 	    	Memory.sending=false;
 	    	output.setText(result);
 	    	  Memory.previousSend=System.currentTimeMillis();
@@ -321,43 +338,60 @@ speed.setText(""+location.getSpeed());
 	}
 	}
 	
-	
-	public void checkDriving(){
+
+	public void checkDriving() throws JSONException{
 		double x_diff=Math.abs(Memory.ax_min)+Math.abs(Memory.ax_max);
 		double y_diff=Math.abs(Memory.ay_min)+Math.abs(Memory.ay_max);
 		double z_diff=Math.abs(Memory.az_min)+Math.abs(Memory.az_max);
 		output.setText("TURNS:"+x_diff+"BRAKING"+y_diff);
-		 if(System.currentTimeMillis()-Memory.previousSend > Memory.LOOP_TIME &&!Memory.sending){
-			 Memory.getJsonData();
-			 Memory.previousSend=System.currentTimeMillis();
+		
+		int cornering_level=-1;
+		int braking_level=-1;
+		
 		if(x_diff<Memory.X_LOW_TRESHOLD){
-			speakWords("Perfect turning...");
+			speakWords("PERFECT CORNERING");
+			cornering_level=1;
 		}
 		else if(x_diff>=Memory.X_LOW_TRESHOLD && x_diff<Memory.X_MEDIUM_TRESHOLD){
-			speakWords("Good turning");
+			speakWords("GOOD CORNERING");
+			cornering_level=2;
 		}
 		else if(x_diff>=Memory.X_MEDIUM_TRESHOLD && x_diff<Memory.X_HIGH_TRESHOLD){
-			speakWords("Watch out!Sharp turns!");
+			speakWords("HIGH CORNERING");
+			cornering_level=3;
 		}
 		else if(x_diff>=Memory.X_HIGH_TRESHOLD){
 			//Toast.makeText(this, "Left and Right Turns are EXTREME:"+(int)x_diff, Toast.LENGTH_LONG).show();
-	      speakWords("Your Turns are VERY dangerous!");
+	      speakWords("DANGEROUS TURNING!");
+	      cornering_level=4;
 		}
 		
 		if(y_diff<Memory.Y_LOW_TRESHOLD){
-		speakWords("Perfect braking!");
+		speakWords("GREAT BRAKING");
+		braking_level=1;
 		}
 		else if(y_diff>=Memory.Y_LOW_TRESHOLD && y_diff<Memory.Y_MEDIUM_TRESHOLD){
-			speakWords("Good braking!");//	Toast.makeText(this, "Acceleration Braking are LOW:"+(int)y_diff, Toast.LENGTH_LONG).show();
+			braking_level=2;
+			speakWords("GOOD BRAKING");//	Toast.makeText(this, "Acceleration Braking are LOW:"+(int)y_diff, Toast.LENGTH_LONG).show();
 		}
 		else if(y_diff>=Memory.Y_MEDIUM_TRESHOLD && y_diff<Memory.Y_HIGH_TRESHOLD){
-			speakWords("Cautious with braking!");//	Toast.makeText(this, "Acceleration Braking  are MEDIUM:"+(int)y_diff, Toast.LENGTH_LONG).show();
+			braking_level=3;
+			speakWords("HIGH BRAKING");//	Toast.makeText(this, "Acceleration Braking  are MEDIUM:"+(int)y_diff, Toast.LENGTH_LONG).show();
 		}
 		else if(y_diff>=Memory.Y_HIGH_TRESHOLD){
-			speakWords("Fuck you Michael! stop shaking mee!");	//Toast.makeText(this, "Acceleration Braking are EXTREME:"+(int)y_diff, Toast.LENGTH_LONG).show();
+			braking_level=4;
+			speakWords("EXTREME BRAKING");	//Toast.makeText(this, "Acceleration Braking are EXTREME:"+(int)y_diff, Toast.LENGTH_LONG).show();
 		}
+		 
+		 Memory.jsonBody.put("braking_level", braking_level);
+		 Memory.jsonBody.put("cornering_level", cornering_level);
+		 
+		 if(previousLocation!=null){
+		 speakWords("Your current speed is "+(int)previousLocation.getSpeed()*2+" kilometres per hour.");
 		 }
-		
+		 else{
+			 speakWords("No GPS data available...");
+		 }
 	}
 
 	@Override
@@ -392,5 +426,5 @@ speed.setText(""+location.getSpeed());
 	                startActivity(installTTSIntent);
 	            }
 	        }
-}
+	  }
  }

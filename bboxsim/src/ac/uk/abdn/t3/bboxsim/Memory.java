@@ -25,7 +25,7 @@ public class Memory {
 	double altitude;
 	double course;
 	long timeTaken;
-	static long LOOP_TIME=30000;
+	static long LOOP_TIME=20000;
 	static long previousSend;
 	
 	static float temp=-99;
@@ -47,12 +47,12 @@ public class Memory {
 	static long y_total;
 	static long z_total;
 	
-	static	float X_LOW_TRESHOLD=10;
-	static	float X_MEDIUM_TRESHOLD=20;
-	static	float X_HIGH_TRESHOLD=30;
-	static	float Y_LOW_TRESHOLD=10;
-	static	float Y_MEDIUM_TRESHOLD=20;
-	static	float Y_HIGH_TRESHOLD=30;
+	static	double X_LOW_TRESHOLD=5;
+	static	double X_MEDIUM_TRESHOLD=9;
+	static	double X_HIGH_TRESHOLD=14;
+	static	double Y_LOW_TRESHOLD=3.5;
+	static	double Y_MEDIUM_TRESHOLD=5.5;
+	static	double Y_HIGH_TRESHOLD=6.5;
 	
 	
 	
@@ -122,23 +122,26 @@ public class Memory {
 		 jsonBody.put("az_max", az_max);
 		 jsonBody.put("az_avg", az_average);
 		
-		 
+	
 		Location l= locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-		
+		if(l!=null){
 		 jsonBody.put("lt", l.getLatitude());
 		 jsonBody.put("ln", l.getLongitude());
 		 jsonBody.put("al", l.getAltitude());
 		 jsonBody.put("cs", l.getBearing());
 		 jsonBody.put("sp", l.getSpeed());
 		 jsonBody.put("temp", temp);
+	
 		 long time=l.getTime();
 		 Date d=new Date(time);
 		 String formattedDate = new SimpleDateFormat("dd-MM-yy hh:mm:ss").format(d);
 		 jsonBody.put("tm",formattedDate);
+		 }
 		 Date sent=new Date();
 		 String formattedsent = new SimpleDateFormat("dd-MM-yy hh:mm:ss").format(sent);
 		 jsonBody.put("time",formattedsent);
 		 jsonBody.put("device_id", deviceid);
+		 
 		 return jsonBody.toString();
 		 }
 		 catch(Exception e){

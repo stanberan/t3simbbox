@@ -17,6 +17,7 @@ EditText y_high_tresh;
 EditText x_low_tresh;
 EditText x_medium_tresh;
 EditText x_high_tresh;
+
 Button submit;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -45,12 +46,12 @@ y_medium_tresh.setText(Memory.Y_MEDIUM_TRESHOLD+"");
 
 			@Override
 			public void onClick(View arg0) {
-			Memory.Y_LOW_TRESHOLD=Integer.parseInt(y_low_tresh.getText().toString());
-			Memory.Y_MEDIUM_TRESHOLD=Integer.parseInt(y_medium_tresh.getText().toString());
-			Memory.Y_HIGH_TRESHOLD=Integer.parseInt(y_high_tresh.getText().toString());
-			Memory.X_LOW_TRESHOLD=Integer.parseInt(x_low_tresh.getText().toString());
-			Memory.X_MEDIUM_TRESHOLD=Integer.parseInt(x_medium_tresh.getText().toString());
-			Memory.X_HIGH_TRESHOLD=Integer.parseInt(x_high_tresh.getText().toString());
+			Memory.Y_LOW_TRESHOLD=Double.parseDouble(y_low_tresh.getText().toString());
+			Memory.Y_MEDIUM_TRESHOLD=Double.parseDouble(y_medium_tresh.getText().toString());
+			Memory.Y_HIGH_TRESHOLD=Double.parseDouble(y_high_tresh.getText().toString());
+			Memory.X_LOW_TRESHOLD=Double.parseDouble(x_low_tresh.getText().toString());
+			Memory.X_MEDIUM_TRESHOLD=Double.parseDouble(x_medium_tresh.getText().toString());
+			Memory.X_HIGH_TRESHOLD=Double.parseDouble(x_high_tresh.getText().toString());
 			Intent i= new Intent(TresholdActivity.this,MainActivity.class);
 			startActivity(i);
 			}
