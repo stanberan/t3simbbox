@@ -9,6 +9,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 
 public class ProvTrack {
@@ -20,7 +21,7 @@ public class ProvTrack {
 	static String ttt_ns="ttt:";static String ttt_prefix="http://t3.abdn.ac.uk/ontologies/t3.owl#";
 	static String prov_ns="prov:";static String prov_prefix="http://www.w3.org/ns/prov#";
 	static String bbox_ns="bbox:"; static String bbox_prefix="http://t3.abdn.ac.uk/t3v2/1/device/"+TTT_DEV_ID+"/";
-	
+	static String agent_resource=bbox_prefix+"SimBBoxController";
 	
 	static String wasAssociatedWith=prov_ns+"wasAssociatedWith ";
 	static String wasGeneratedBy=prov_ns+"wasGeneratedBy ";
@@ -43,10 +44,13 @@ public class ProvTrack {
 	   
 	   
    }
-	
+	public static void send(){
+		new SendProvTask().execute(new String[]{"",""});
+	}
 	public static void addStatement(String statement){
 		provTrack.add(statement);		
 	}
+	
 	
 	public class SendProvTask extends AsyncTask<String, String, String>{
 
@@ -62,11 +66,50 @@ public class ProvTrack {
 	     *            completes.
 	     * 
 	     */
-	    public SendTask(String json,String url){
-	     body=json;
-	     this.url=url;
+	    public SendProvTask(){
+	 
 	    }
 
+	    
+	    
+	    public void sendProv(){
+			
+			String prefixes="@prefix : <"+bbox_ns+"> . ";
+			String body="{\"body\":\"@prefix bbox: <"+bbox_prefix+"> ."+"@prefix prov: <"+prov_prefix+"> ."+"@prefix ttt: <"+ttt_prefix+"> ."+"@prefix xsd:<http://www.w3.org/2001/XMLSchema>.";
+					
+					
+					for (int i=0; i<provTrack.size();i++){
+						String line=provTrack.get(i);
+						body+=line+" .";		
+						
+					}
+			
+			provTrack.clear();
+			
+		 body+="\"}";
+	Log.e("Sending prov:",body);
+			DefaultHttpClient client=new DefaultHttpClient();
+
+			try {
+			    HttpPost request = new HttpPost("http://localhost:8080/t3v2/1/device/upload/"+TTT_DEV_ID+"/prov");
+			    StringEntity params = new StringEntity(body);
+			    request.addHeader("content-type", "application/json");
+			    request.setEntity(params);
+			   HttpResponse resp= client.execute(request);
+			  System.out.println("StatusCode: "+ resp.getStatusLine().getStatusCode());
+		
+			} catch (Exception ex) {
+			   ex.printStackTrace();
+			} finally {
+			   // httpClient.close();
+			}
+			
+			
+			
+		}
+	    
+	    
+	    
 	    @Override
 	    protected String doInBackground(String... params) {
 	
@@ -91,7 +134,7 @@ public class ProvTrack {
 	    protected void onPostExecute(String result) {
 	  	//  speakWords("Data sent!Reading server message:"+result);
 	    	Memory.sending=false;
-	    	output.setText(result);
+	    //	output.setText(result);
 	    	  Memory.previousSend=System.currentTimeMillis();
 	    	
 	}
@@ -99,40 +142,6 @@ public class ProvTrack {
 	
 	
 	
-	public static void sendProv(){
-		
-		String prefixes="@prefix : <"+bbox_ns+"> . ";
-		String body="{\"body\":\"@prefix bbox: <"+bbox_prefix+"> ."+"@prefix prov: <"+prov_prefix+"> ."+"@prefix ttt: <"+ttt_prefix+"> ."+"@prefix xsd:<http://www.w3.org/2001/XMLSchema>.";
-				
-				
-				for (int i=0; i<provTrack.size();i++){
-					String line=provTrack.get(i);
-					body+=line+" .";		
-					
-				}
-		
-		provTrack.clear();
-		
-	 body+="\"}";
-System.out.println(body);
-		DefaultHttpClient c
-
-		try {
-		    HttpPost request = new HttpPost("http://localhost:8080/t3v2/1/device/upload/"+TTT_DEV_ID+"/prov");
-		    StringEntity params = new StringEntity(body);
-		    request.addHeader("content-type", "application/json");
-		    request.setEntity(params);
-		   HttpResponse resp= httpClient.execute(request);
-		  System.out.println("StatusCode: "+ resp.getStatusLine().getStatusCode());
 	
-		} catch (Exception ex) {
-		   ex.printStackTrace();
-		} finally {
-		   // httpClient.close();
-		}
-		
-		
-		
-	}
 }
 

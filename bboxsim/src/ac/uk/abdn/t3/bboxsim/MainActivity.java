@@ -330,6 +330,21 @@ speed.setText(""+location.getSpeed());
 
 	    @Override
 	    protected void onPostExecute(String result) {
+	    	try {
+				JSONObject json=new JSONObject(result);
+				
+				if(json.getBoolean("accepted"){
+					ProvTrack.send();
+					
+				}
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    	
+	    	
+	    	
+	    	
 	  	//  speakWords("Data sent!Reading server message:"+result);
 	    	Memory.sending=false;
 	    	output.setText(result);
