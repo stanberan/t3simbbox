@@ -1,5 +1,6 @@
 package ac.uk.abdn.t3.bboxsim;
 
+import java.util.Date;
 import java.util.Locale;
 
 import org.apache.http.HttpResponse;
@@ -11,16 +12,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-
-
-
-
-
-
-
-
-
 
 
 import com.jjoe64.graphview.GraphView;
@@ -79,6 +70,7 @@ LocationManager locationManager;
 SensorManager sensorManager;
 TextView distance;
 TextView speed;
+String id="";
 private SensorEventListener sensorListener;
 
 
@@ -130,12 +122,17 @@ String deviceid="bboxSimulatorV1";
 						Memory.jsonBody.put("batt", getBatteryLevel());
 					    checkDriving();
 					    Memory.jsonBody.put("distance", distanceTravelled);
+					    id="genid"+new Date().getTime();
+					    Memory.jsonBody.put("provid", id);
+					    //shared id for both servers to identify entities
+				
 					  distanceTravelled=0;
 					 String jsonData=Memory.getJsonData();
 					 
 						 // output.setText(jsonData);
 						  Memory.sending=true;
 						  speakWords("Sending data to server");
+						
 			        	  new SendTask(jsonData,SERVER_URL).execute();
 					} catch (JSONException e) {
 						// TODO Auto-generated catch block
@@ -308,6 +305,13 @@ speed.setText(""+location.getSpeed());
 	     this.url=url;
 	    }
 
+	    
+	   
+	    
+	    
+	    
+	    
+	    
 	    @Override
 	    protected String doInBackground(String... params) {
 	
@@ -333,8 +337,9 @@ speed.setText(""+location.getSpeed());
 	    	try {
 				JSONObject json=new JSONObject(result);
 				
-				if(json.getBoolean("accepted"){
-					ProvTrack.send();
+				if(json.getBoolean("collected")){
+					
+					genProvDataSend(json.getString("agent"),id);	
 					
 				}
 			} catch (JSONException e) {
@@ -351,6 +356,66 @@ speed.setText(""+location.getSpeed());
 	    	  Memory.previousSend=System.currentTimeMillis();
 	    	
 	}
+	    
+	    
+	    public void genProvDataSend(String agent, String id){
+	    	ProvTrack track=new ProvTrack();
+	    String act=ProvTrack.bbox_ns+"ExSimActivity"+new Date().getTime();
+	 
+	    String accEntity=ProvTrack.bbox_ns+"Acc"+id;
+	    String speedEntity=ProvTrack.bbox_ns+"Speed"+id;
+	    String locationEntity=ProvTrack.bbox_ns+"Location"+id;
+	    
+	    String genAct=ProvTrack.bbox_ns+"SimboxGenActivity"+new Date().getTime();
+	    String sensorACC=ProvTrack.bbox_ns+"AccelerometerSensor";
+	    String sensorGPS=ProvTrack.bbox_ns+"GPSSensor";
+	    
+	    
+	    track.addStatement(genAct+" "+ProvTrack.type+ProvTrack.Activity);
+		track.addStatement(accEntity+" "+ProvTrack.wasGeneratedBy+genAct);
+		track.addStatement(speedEntity+" "+ProvTrack.wasGeneratedBy+genAct);
+		track.addStatement(locationEntity+" "+ProvTrack.wasGeneratedBy+genAct);
+		track.addStatement(genAct+" "+ProvTrack.used+sensorACC);
+		track.addStatement(genAct+" "+ProvTrack.used+sensorGPS);
+	    
+		track.addStatement(sensorGPS+" "+ProvTrack.type +ProvTrack.Entity);
+		track.addStatement(sensorACC+" "+ProvTrack.type +ProvTrack.Entity);
+	    
+	    track.addStatement(act+" "+ProvTrack.type+ProvTrack.Activity);
+		track.addStatement(act+" "+ProvTrack.used+accEntity);
+		track.addStatement(act+" "+ProvTrack.used+speedEntity);
+		track.addStatement(act+" "+ProvTrack.used+locationEntity);
+		
+		track.addStatement(accEntity+" "+ProvTrack.type +ProvTrack.Accelerometer);
+		track.addStatement(speedEntity+" "+ProvTrack.type +ProvTrack.Speed);
+		track.addStatement(locationEntity+" "+ProvTrack.type +ProvTrack.Location);
+		
+		track.addStatement(accEntity+" "+ProvTrack.type +ProvTrack.PersonalData);
+		track.addStatement(speedEntity+" "+ProvTrack.type +ProvTrack.PersonalData);
+		track.addStatement(locationEntity+" "+ProvTrack.type +ProvTrack.PersonalData);
+		
+		track.addStatement(accEntity+" "+ProvTrack.type +ProvTrack.Entity);
+		track.addStatement(speedEntity+" "+ProvTrack.type +ProvTrack.Entity);
+		track.addStatement(locationEntity+" "+ProvTrack.type +ProvTrack.Entity);
+		
+		track.addStatement(accEntity+" "+ProvTrack.description+"\\\"Accelerometer values\\\"^^xsd:string");
+		track.addStatement(speedEntity+" "+ProvTrack.description+"\\\"Speed in km/h\\\"^^xsd:string");
+		track.addStatement(locationEntity+" "+ProvTrack.description+"\\\"Latitude and Longtitude of location\\\"^^xsd:string");
+		
+
+		
+		
+		
+		// ADD GENERATION MAYBE 
+		
+		track.addStatement(act+" "+ProvTrack.wasAssociatedWith + agent);
+		track.addStatement(genAct+" "+ProvTrack.wasAssociatedWith + ProvTrack.agent_resource);
+	    track.send();
+	    
+	    
+	    }
+	    
+	    
 	}
 	
 

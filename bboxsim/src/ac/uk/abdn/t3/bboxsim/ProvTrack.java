@@ -1,3 +1,4 @@
+package ac.uk.abdn.t3.bboxsim;
 
 
 import java.util.ArrayList;
@@ -10,18 +11,19 @@ import org.apache.http.util.EntityUtils;
 
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 
 public class ProvTrack {
 	
 	static String TTT_DEV_ID="simbbox001";
 	
-	static ArrayList<String> provTrack=new ArrayList<String>();
+	 ArrayList<String> provTrack=new ArrayList<String>();
 	static String type="<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "; //space
 	static String ttt_ns="ttt:";static String ttt_prefix="http://t3.abdn.ac.uk/ontologies/t3.owl#";
 	static String prov_ns="prov:";static String prov_prefix="http://www.w3.org/ns/prov#";
 	static String bbox_ns="bbox:"; static String bbox_prefix="http://t3.abdn.ac.uk/t3v2/1/device/"+TTT_DEV_ID+"/";
-	static String agent_resource=bbox_prefix+"SimBBoxController";
+	static String agent_resource=bbox_ns+"SimBBoxController";
 	
 	static String wasAssociatedWith=prov_ns+"wasAssociatedWith ";
 	static String wasGeneratedBy=prov_ns+"wasGeneratedBy ";
@@ -35,6 +37,10 @@ public class ProvTrack {
     static String PersonalData=ttt_ns+"PersonalData";
     static String purpose=ttt_ns+"purpose ";
     static String description=ttt_ns+"description ";
+    static String Accelerometer=ttt_ns+"Accelerometer";
+    static String Location=ttt_ns+"Location";
+    static String Performance=ttt_ns+"Performance";
+    static String Speed=ttt_ns+"Speed";
    static String SP=" ";
    static String DT=".";
    
@@ -44,19 +50,20 @@ public class ProvTrack {
 	   
 	   
    }
-	public static void send(){
-		new SendProvTask().execute(new String[]{"",""});
+	public void send(){
+		SendProvTask task=new SendProvTask(provTrack);
+		task.execute(new String[]{""});
 	}
-	public static void addStatement(String statement){
+	public  void addStatement(String statement){
 		provTrack.add(statement);		
 	}
 	
 	
-	public class SendProvTask extends AsyncTask<String, String, String>{
+	private static class SendProvTask extends AsyncTask<String, String, String>{
 
 	    private String body;
 	    private String url;
-	
+	ArrayList<String> provTrack;
 
 	    /**
 	     * Creates a new instance of GetTask with the specified URL and callback.
@@ -66,15 +73,16 @@ public class ProvTrack {
 	     *            completes.
 	     * 
 	     */
-	    public SendProvTask(){
+	    public SendProvTask(ArrayList<String> prov){
+	 this.provTrack=prov;
 	 
 	    }
 
 	    
 	    
-	    public void sendProv(){
+	    public String sendProv(){
 			
-			String prefixes="@prefix : <"+bbox_ns+"> . ";
+		
 			String body="{\"body\":\"@prefix bbox: <"+bbox_prefix+"> ."+"@prefix prov: <"+prov_prefix+"> ."+"@prefix ttt: <"+ttt_prefix+"> ."+"@prefix xsd:<http://www.w3.org/2001/XMLSchema>.";
 					
 					
@@ -91,17 +99,21 @@ public class ProvTrack {
 			DefaultHttpClient client=new DefaultHttpClient();
 
 			try {
-			    HttpPost request = new HttpPost("http://localhost:8080/t3v2/1/device/upload/"+TTT_DEV_ID+"/prov");
+			    HttpPost request = new HttpPost("http://t3.abdn.ac.uk:8080/t3v2/1/device/upload/"+TTT_DEV_ID+"/prov");
 			    StringEntity params = new StringEntity(body);
 			    request.addHeader("content-type", "application/json");
 			    request.setEntity(params);
 			   HttpResponse resp= client.execute(request);
-			  System.out.println("StatusCode: "+ resp.getStatusLine().getStatusCode());
+			   if(resp.getEntity()!=null){
+				   Log.e("Entity",EntityUtils.toString(resp.getEntity()));
+			   }
+			  return "StatusCode: "+ resp.getStatusLine().getStatusCode();
 		
 			} catch (Exception ex) {
 			   ex.printStackTrace();
+			   return ex.getMessage();
 			} finally {
-			   // httpClient.close();
+			 // client.close();
 			}
 			
 			
@@ -112,32 +124,14 @@ public class ProvTrack {
 	    
 	    @Override
 	    protected String doInBackground(String... params) {
-	
-	       
-	      try{
-	    	  HttpPost httpPost = new HttpPost(url);
-	          httpPost.setEntity(new StringEntity(body));
-	       
-	          httpPost.setHeader("Content-type", "application/json");
-	         HttpResponse responseHttp= new DefaultHttpClient().execute(httpPost);
-	    	
-	    	return EntityUtils.toString(responseHttp.getEntity());
+	  String s=sendProv();
+	  Log.e("STATUS OF SEND PROV", s);
+	  return s ;    
 	    
-	      }
-	      catch(Exception e){
-	    	  e.printStackTrace();
-	    	  return "exception:"+e.getMessage();
-	      }
-	    }
-
-	    @Override
-	    protected void onPostExecute(String result) {
-	  	//  speakWords("Data sent!Reading server message:"+result);
-	    	Memory.sending=false;
-	    //	output.setText(result);
-	    	  Memory.previousSend=System.currentTimeMillis();
-	    	
 	}
+	    public void onPostExecute(String result){
+	    	Log.e("STATUS of SENT Prov", result);
+	    }
 	}
 	
 	

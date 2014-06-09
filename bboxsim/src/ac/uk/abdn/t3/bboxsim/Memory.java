@@ -16,6 +16,7 @@ public class Memory {
 	static LocationListener gpsListener;
 	static LocationManager locationManager;
 	static JSONObject jsonBody=new JSONObject();
+	
 	static String deviceid="simbbox001";
 	static boolean sending=false;
 	
