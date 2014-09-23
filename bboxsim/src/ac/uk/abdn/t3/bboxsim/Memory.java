@@ -20,6 +20,9 @@ public class Memory {
 	static String deviceid="simbbox001";
 	static boolean sending=false;
 	
+	static boolean isSpeaking= true;
+	
+	
 	float speed;
 	double latitude;
 	double longitude;

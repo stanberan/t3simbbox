@@ -51,6 +51,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="SetTresholds"/>
+     
+         <Button
+        android:id="@+id/speakButton"
+       
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Speech ON"/>
 </LinearLayout>
     
 <LinearLayout android:id="@+id/graph"

@@ -49,6 +49,7 @@ import android.widget.Toast;
 
  public class MainActivity extends Activity implements OnInitListener {
 static TextView output;
+ 
 long count;
 private TextToSpeech myTTS;
 private int MY_DATA_CHECK_CODE = 0;
@@ -70,6 +71,7 @@ LocationManager locationManager;
 SensorManager sensorManager;
 TextView distance;
 TextView speed;
+Button speakButton;
 String id="";
 private SensorEventListener sensorListener;
 
@@ -91,16 +93,32 @@ String deviceid="bboxSimulatorV1";
 		sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
 		distance=(TextView)findViewById(R.id.distance);
 		speed=(TextView)findViewById(R.id.speed);
+		speakButton=(Button)findViewById(R.id.speakButton);
 		//check tts
 		 Intent checkTTSIntent = new Intent();
          checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
          startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
 		
+         speakButton.setOnClickListener(new OnClickListener(){
+        	 public void onClick (View v){
+        		 if(Memory.isSpeaking){
+        			 Memory.isSpeaking=false;
+        			 speakButton.setText("Speech OFF");
+        			 
+        		 }
+        		 else{
+        			 Memory.isSpeaking=true;
+        			 speakButton.setText("Speech ON");
+        		 }
+        	 }
+         });
 		sensorListener=new SensorEventListener() {
 		    @Override
 		    public void onAccuracyChanged(Sensor arg0, int arg1) {
 		    }
-
+		    
+		    
+    
 		    @Override
 		    public void onSensorChanged(SensorEvent event) {
 		        Sensor sensor = event.sensor;
@@ -488,10 +506,15 @@ speed.setText(""+location.getSpeed());
 	}
 	
 	  private void speakWords(String speech) {
-		  
+		  if(Memory.isSpeaking){
           //speak straight away
           myTTS.speak(speech, TextToSpeech.QUEUE_ADD, null);
+		  }
   }
+	  
+	 
+	  
+	  
 	  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		     
 	        if (requestCode == MY_DATA_CHECK_CODE) {
