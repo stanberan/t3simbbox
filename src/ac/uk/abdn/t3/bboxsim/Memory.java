@@ -13,7 +13,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class Memory {
-	static String deviceId="simbbox003";
+	static String deviceId="simbbox001";
 	
 	static LocationListener gpsListener;
 	static LocationManager locationManager;
