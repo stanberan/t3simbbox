@@ -70,7 +70,7 @@ GraphViewSeries seriesRnd;
 LinearLayout graphLayout;
 LinearLayout graphLayout1;
 LinearLayout graphLayout2;
-private final String SERVER_URL="http://t3.abdn.ac.uk:8080/bboxserver/upload";
+private final String SERVER_URL="http://crowddata.abdn.ac.uk:8080/bboxserver/upload";
 
 Button start;
 Button set;
@@ -84,7 +84,7 @@ private SensorEventListener sensorListener;
 SharedPreferences prefs;
 
 private static String PROVIDER=LocationManager.GPS_PROVIDER ;
-String deviceid="simbbox003";
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
