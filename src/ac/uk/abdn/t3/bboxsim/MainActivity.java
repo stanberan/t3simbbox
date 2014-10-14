@@ -1,5 +1,6 @@
 package ac.uk.abdn.t3.bboxsim;
 
+import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.Locale;
 
@@ -40,6 +41,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -60,6 +62,7 @@ static Location previousLocation=null;
 static Location secondLocation=null;
 
 float distanceTravelled=0;
+float totalDistanceTravelled=0;
 
 GraphViewSeries seriesCos;
 GraphViewSeries seriesSin;
@@ -78,7 +81,7 @@ TextView speed;
 Button speakButton;
 String id="";
 private SensorEventListener sensorListener;
-
+SharedPreferences prefs;
 
 private static String PROVIDER=LocationManager.GPS_PROVIDER ;
 String deviceid="simbbox003";
@@ -88,6 +91,8 @@ String deviceid="simbbox003";
 		Memory.previousSend=System.currentTimeMillis();
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		prefs = this.getSharedPreferences(
+			      "ac.uk.abdn.t3.bboxsim", Context.MODE_PRIVATE);
 		gpsCheck();
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		output=(TextView)findViewById(R.id.output);
@@ -97,6 +102,7 @@ String deviceid="simbbox003";
 		locationManager=Memory.locationManager;
 		sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
 		distance=(TextView)findViewById(R.id.distance);
+		totalDistanceTravelled=prefs.getFloat("totaldistance", 0);
 		speed=(TextView)findViewById(R.id.speed);
 		speakButton=(Button)findViewById(R.id.speakButton);
 		//check tts
@@ -154,7 +160,7 @@ String deviceid="simbbox003";
 					 
 						 // output.setText(jsonData);
 						  Memory.sending=true;
-						  speakWords("Sending data to server");
+						  speakWords("Sending data");
 						
 			        	  new SendTask(jsonData,SERVER_URL).execute();
 					} catch (JSONException e) {
@@ -174,13 +180,18 @@ String deviceid="simbbox003";
 		};
 		
 		Memory.gpsListener=new LocationListener() { public void onLocationChanged(Location location) {
-		 if(location.hasSpeed()){
-speed.setText(""+location.getSpeed());
+			 DecimalFormat df = new DecimalFormat("#.##");
+			if(location.hasSpeed()){
+speed.setText(""+df.format(location.getSpeed()));
 		 }
 		 if(previousLocation!=null && previousLocation.getTime() != location.getTime()){
 		 float dis=location.distanceTo(previousLocation);
 		 distanceTravelled+=dis;
-		 distance.setText(""+distanceTravelled);
+		 totalDistanceTravelled+=dis;
+		 double distances=totalDistanceTravelled/1000;
+	
+		 String s=""+df.format(distances);
+		 distance.setText(s);
 		 secondLocation=previousLocation;
 			
 		 }
@@ -209,7 +220,8 @@ speed.setText(""+location.getSpeed());
 		start.setOnClickListener(new OnClickListener(){
 			@SuppressLint("InlinedApi")
 			public void onClick(View v){
-				
+			start.setVisibility(View.GONE);	
+			graphLayout.setVisibility(View.VISIBLE);
 			//register event
 				
 				//start getting accelerometer data
@@ -244,11 +256,11 @@ speed.setText(""+location.getSpeed());
 		  v += 0.2;
 		  data[i] = new GraphViewData(i, Math.sin(v));
 		}
-		seriesSin = new GraphViewSeries("X",null, data);
+		seriesSin = new GraphViewSeries("Corners",null, data);
 		seriesSin.getStyle().color=Color.RED;
-		seriesCos = new GraphViewSeries("Y",null, data);
+		seriesCos = new GraphViewSeries("Braking",null, data);
 		seriesCos.getStyle().color=Color.GREEN;
-		seriesRnd = new GraphViewSeries("Z",null, data);
+		seriesRnd = new GraphViewSeries("",null, data);
 		seriesRnd.getStyle().color=Color.YELLOW;
 			GraphView graphView = new LineGraphView(
 			    this // context
@@ -259,7 +271,7 @@ speed.setText(""+location.getSpeed());
 			graphView.addSeries(seriesCos);
 			graphView.addSeries(seriesRnd);
 			//graphView.setHorizontalLabels(new String[] {"2 days ago", "today", "tomorrow"});
-			graphView.getGraphViewStyle().setGridColor(Color.BLACK);
+			graphView.getGraphViewStyle().setGridColor(Color.WHITE);
 		
 			graphView.setViewPort(2, 1000);
 			graphView.setScrollable(true);
@@ -280,13 +292,21 @@ speed.setText(""+location.getSpeed());
 			locationManager.removeUpdates(Memory.gpsListener);
 			sensorManager.unregisterListener(sensorListener);
 			count=0;
-			distanceTravelled=0;
+			start.setVisibility(View.VISIBLE);	
+			graphLayout.setVisibility(View.GONE);
+			
+			prefs.edit().putFloat("totaldistance", totalDistanceTravelled).apply();
+			
 			previousLocation=null;
+			secondLocation=null;
 		}
 		public void onResume(){
 			super.onResume();
-			
+			totalDistanceTravelled=prefs.getFloat("totaldistance", 0);
+			 DecimalFormat df = new DecimalFormat("#.##");
+			distance.setText(df.format(totalDistanceTravelled/1000));
 		}
+		
 	public void gpsCheck(){
 		final LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
 
@@ -297,7 +317,7 @@ speed.setText(""+location.getSpeed());
 
 	  private void buildAlertMessageNoGps() {
 	    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-	    builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+	    builder.setMessage("Simbbox wants your location. Would you like to enable your GPS location?")
 	           .setCancelable(false)
 	           .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	               public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
@@ -307,6 +327,8 @@ speed.setText(""+location.getSpeed());
 	           .setNegativeButton("No", new DialogInterface.OnClickListener() {
 	               public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
 	                    dialog.cancel();
+	                   
+	                    MainActivity.this.finish();
 	               }
 	           });
 	    final AlertDialog alert = builder.create();
@@ -517,7 +539,7 @@ speed.setText(""+location.getSpeed());
 		 speakWords("Your current speed is "+(int)previousLocation.getSpeed()*2+" kilometres per hour.");
 		 }
 		 else{
-			 speakWords("No GPS data available...");
+			 speakWords("no GPS connection established");
 		 }
 	}
 

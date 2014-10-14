@@ -10,25 +10,72 @@
     tools:context=".MainActivity" >
 
    
-<LinearLayout 
-    android:layout_width="match_parent"
-    android:orientation="vertical"
-    android:layout_height="wrap_content">   
     
-     
+    <LinearLayout 
+    android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_height="wrap_content"
+    android:weightSum="100"> 
+     <LinearLayout 
+    android:layout_width="wrap_content"
+    android:orientation="vertical"
+    android:layout_weight="50"
+    android:layout_height="wrap_content">  
+              <TextView
+        android:id="@+id/dista"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         android:textColor="#FFFFFF"
+         android:textSize="20sp" 
+         android:text="Current speed" /> 
   <TextView
         android:id="@+id/speed"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="35sp" 
+        android:textColor="#FFFFFF"
+        android:text="0"/>
+ 
+    <TextView
+        android:id="@+id/label_speed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
         android:textSize="15sp" 
-        android:text="speed"/>
+        android:text="km/h"/>
+     </LinearLayout>
         
+     
+     <LinearLayout 
+    android:layout_width="wrap_content"
+    android:orientation="vertical"
+    android:layout_weight="50"
+    android:layout_height="wrap_content"> 
+                 <TextView
+        android:id="@+id/distance_tot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         android:textColor="#FFFFFF"
+         android:textSize="20sp" 
+         android:text="Total Distance Travelled" />
          <TextView
         android:id="@+id/distance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-         android:textSize="15sp" 
-         android:text="distance" />
+         android:textColor="#FFFFFF"
+         android:textSize="35sp" 
+         android:text="0" />
+                  <TextView
+        android:id="@+id/distance_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         android:textColor="#FFFFFF"
+         android:textSize="20sp" 
+         android:text="kilometres" />
+             </LinearLayout>
+             
+     
+  </LinearLayout>
      
      <TextView
         android:id="@+id/output"
@@ -36,18 +83,12 @@
         android:layout_height="wrap_content"
    
      
-        android:text="@string/hello_world" />
+        android:text="" />
     
-    
-    <Button
-        android:id="@+id/button_sim"
-       
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Start simulation..."/>
+
      <Button
         android:id="@+id/button_tre"
-       
+       android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="SetTresholds"/>
@@ -58,25 +99,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Speech ON"/>
-</LinearLayout>
+
     
+    <Button
+        android:id="@+id/button_sim"
+       
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/green_start_button"
+        android:layout_gravity="center_horizontal"
+        android:text=""/>
+      
 <LinearLayout android:id="@+id/graph"
     android:layout_width="match_parent"
     android:background="#000000"
     android:orientation="vertical"
+    android:visibility="gone"
     android:layout_height="wrap_content"/>
     
-    <LinearLayout android:id="@+id/graph1"
-    android:layout_width="match_parent"
-    android:background="#000000"
-    android:orientation="vertical"
-    android:layout_height="wrap_content"/>
     
-    <LinearLayout android:id="@+id/graph2"
-    android:layout_width="match_parent"
-    android:background="#000000"
-    android:orientation="vertical"
-    android:layout_height="wrap_content"/>
     
 
     
