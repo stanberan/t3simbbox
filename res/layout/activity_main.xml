@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:textColor="#FFFFFF"
         android:textSize="15sp" 
-        android:text="km/h"/>
+        android:text="mph"/>
      </LinearLayout>
         
      
@@ -71,7 +71,7 @@
         android:layout_height="wrap_content"
          android:textColor="#FFFFFF"
          android:textSize="20sp" 
-         android:text="kilometres" />
+         android:text="miles" />
              </LinearLayout>
              
      

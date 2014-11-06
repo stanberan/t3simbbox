@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 
 public class ProvTrack {
-	static String host="http://crowddata.abdn.ac.uk:8080/";
+	static String host="http://t3.abdn.ac.uk:8080/";
 
 	
 	 ArrayList<String> provTrack=new ArrayList<String>();

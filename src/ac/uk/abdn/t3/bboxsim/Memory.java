@@ -13,7 +13,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class Memory {
-	static String deviceId="simbbox001";
+	static String deviceId="simbbox001"; //Stan
 	
 	static LocationListener gpsListener;
 	static LocationManager locationManager;
@@ -135,7 +135,8 @@ public class Memory {
 		 jsonBody.put("ln", l.getLongitude());
 		 jsonBody.put("al", l.getAltitude());
 		 jsonBody.put("cs", l.getBearing());
-		 jsonBody.put("sp", l.getSpeed());
+		 
+		 jsonBody.put("sp", Math.round(l.getSpeed()*2.2369362920544));
 		 jsonBody.put("temp", temp);
 	
 		 long time=l.getTime();

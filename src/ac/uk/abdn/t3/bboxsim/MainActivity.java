@@ -70,7 +70,7 @@ GraphViewSeries seriesRnd;
 LinearLayout graphLayout;
 LinearLayout graphLayout1;
 LinearLayout graphLayout2;
-private final String SERVER_URL="http://crowddata.abdn.ac.uk:8080/bboxserver/upload";
+private final String SERVER_URL="http://t3.abdn.ac.uk:8080/bboxserver/upload";
 
 Button start;
 Button set;
@@ -137,10 +137,14 @@ private static String PROVIDER=LocationManager.GPS_PROVIDER ;
 		        	
 		        float i=sensor.getMaximumRange();
 		           Memory.getACCReadLoop(event.values[0], event.values[1], event.values[2],i);
+		           try{
 		        seriesSin.appendData(new GraphViewData(count++,event.values[0]), true, 1000);
 		        seriesCos.appendData(new GraphViewData(count++,event.values[1]), true, 1000);
 		        seriesRnd.appendData(new GraphViewData(count++,event.values[2]), true, 1000);
-		           
+		           }
+		           catch(IllegalArgumentException e){
+		        	   
+		           }
 		        if(System.currentTimeMillis()-Memory.previousSend > Memory.LOOP_TIME &&!Memory.sending){
 		        	   Log.e("LOG","GETTING JSON DATA AFTER 20 seconds");
 		        	  //sendData
@@ -153,7 +157,7 @@ private static String PROVIDER=LocationManager.GPS_PROVIDER ;
 					    Memory.jsonBody.put("distance", distanceTravelled);
 					    id="genid"+new Date().getTime();
 					    Memory.jsonBody.put("provid", id);
-					    //shared id for both servers to identify entities
+					    //shared id for both servers to identify entities! This should be used for in all agents servers and devices
 				
 					  distanceTravelled=0;
 					 String jsonData=Memory.getJsonData();
@@ -182,20 +186,21 @@ private static String PROVIDER=LocationManager.GPS_PROVIDER ;
 		Memory.gpsListener=new LocationListener() { public void onLocationChanged(Location location) {
 			 DecimalFormat df = new DecimalFormat("#.##");
 			if(location.hasSpeed()){
-speed.setText(""+df.format(location.getSpeed()));
+				int spee=(int) Math.round(location.getSpeed()*2.23693629);
+				speed.setText(""+spee);
 		 }
 		 if(previousLocation!=null && previousLocation.getTime() != location.getTime()){
 		 float dis=location.distanceTo(previousLocation);
 		 distanceTravelled+=dis;
 		 totalDistanceTravelled+=dis;
-		 double distances=totalDistanceTravelled/1000;
+		 double distances=totalDistanceTravelled/1609.344;
 	
 		 String s=""+df.format(distances);
 		 distance.setText(s);
 		 secondLocation=previousLocation;
-			
-		 }
 		 previousLocation=location;
+		 }
+		previousLocation=location;
 		 
 		 
 			
@@ -226,7 +231,7 @@ speed.setText(""+df.format(location.getSpeed()));
 				
 				//start getting accelerometer data
 				Log.e("LOG", "Activating GPS signals");
-				locationManager.requestLocationUpdates(PROVIDER, 500, 10.0f, Memory.gpsListener);
+				locationManager.requestLocationUpdates(PROVIDER, 500, 3.0f, Memory.gpsListener);
 			//	sensorManager.registerListener(sensorListener, sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY), SensorManager.SENSOR_DELAY_NORMAL);
 				sensorManager.registerListener(sensorListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
 				sensorManager.registerListener(sensorListener, sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE), SensorManager.SENSOR_DELAY_NORMAL);
@@ -317,7 +322,7 @@ speed.setText(""+df.format(location.getSpeed()));
 
 	  private void buildAlertMessageNoGps() {
 	    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-	    builder.setMessage("Simbbox wants your location. Would you like to enable your GPS location?")
+	    builder.setMessage("BboxSim needs your GPS data. Would you like to enable your GPS location?")
 	           .setCancelable(false)
 	           .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
 	               public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
@@ -467,9 +472,9 @@ speed.setText(""+df.format(location.getSpeed()));
 		track.addStatement(speedEntity+" "+ProvTrack.type +ProvTrack.Entity);
 		track.addStatement(locationEntity+" "+ProvTrack.type +ProvTrack.Entity);
 		
-		track.addStatement(accEntity+" "+ProvTrack.description+"\\\"Accelerometer values\\\"^^xsd:string");
-		track.addStatement(speedEntity+" "+ProvTrack.description+"\\\"Speed in km/h\\\"^^xsd:string");
-		track.addStatement(locationEntity+" "+ProvTrack.description+"\\\"Latitude and Longtitude of location\\\"^^xsd:string");
+		track.addStatement(accEntity+" "+ProvTrack.description+"\\\"Accelerometer data values\\\"^^xsd:string");
+		track.addStatement(speedEntity+" "+ProvTrack.description+"\\\"Speed in mph\\\"^^xsd:string");
+		track.addStatement(locationEntity+" "+ProvTrack.description+"\\\"Latitude and Longtitude of your location\\\"^^xsd:string");
 		
 
 		
@@ -536,10 +541,10 @@ speed.setText(""+df.format(location.getSpeed()));
 		 Memory.jsonBody.put("cornering_level", cornering_level);
 		 
 		 if(previousLocation!=null){
-		 speakWords("Your current speed is "+(int)previousLocation.getSpeed()*2+" kilometres per hour.");
+		 speakWords("Your current speed is "+(int)Math.round(previousLocation.getSpeed()*2.23693629)+" miles per hour.");
 		 }
 		 else{
-			 speakWords("no GPS connection established");
+			// speakWords("");
 		 }
 	}
 
